@@ -61,9 +61,17 @@ async function run() {
   }
 
     app.get("/users", async(req,res)=>{
-        const result = await usersCollection.find().toArray()
+      const search = req.query.search || ''
+      let query = {
+        fullName:{
+          $regex: String(search),
+          $options: 'i'
+        }
+      }
+        const result = await usersCollection.find(query).toArray()
         res.send(result)
     })
+ 
     app.post("/users", async(req,res)=>{
       const query = req.body;
       const result = await usersCollection.insertOne(query)
