@@ -34,9 +34,40 @@ async function run() {
     const db = client.db("user-DB")
     const usersCollection = db.collection("users")
 
+    app.post('/jwt', async (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_Token, {
+        expiresIn: '20h'
+      })
+      // console.log(token)
+      res.send({ token })
+    })
+   //verifyToken midddleware
+   const verifyToken = (req, res, next) => {
+    // console.log('inside verifyToken ', req.headers.authorization)
+    if (!req.headers.authorization) {
+      return res.send(401).send({ message: 'unAuthorized access' })
+    }
+    const token = req.headers.authorization.split(' ')[1]
+    console.log(token);
+
+    jwt.verify(token, process.env.ACCESS_Token, (err, decoded) => {
+      if (err) {
+        return res.status(401).send({ message: 'unAuthorized access' })
+      }
+      req.decoded = decoded;
+      next()
+    })
+  }
+
     app.get("/users", async(req,res)=>{
         const result = await usersCollection.find().toArray()
         res.send(result)
+    })
+    app.post("/users", async(req,res)=>{
+      const query = req.body;
+      const result = await usersCollection.insertOne(query)
+      res.send(result)
     })
 
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
